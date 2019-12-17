@@ -18,10 +18,12 @@
 package kubernetes
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -99,29 +101,12 @@ func Test_getPodContainerImageTag(t *testing.T) {
 }
 
 func Test_getPodFromPodList(t *testing.T) {
-	podList := corev1.PodList{
-		TypeMeta: metav1.TypeMeta{},
-		ListMeta: metav1.ListMeta{},
-		Items:    make([]corev1.Pod, 2),
-	}
-	validPod := corev1.Pod{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{Name: "valid"},
-		Spec:       corev1.PodSpec{},
-		Status:     corev1.PodStatus{},
-	}
-	anotherPod := corev1.Pod{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{Name: "Another"},
-		Spec:       corev1.PodSpec{},
-		Status:     corev1.PodStatus{},
-	}
-
-	podList.Items[0] = validPod
-	podList.Items[1] = anotherPod
+	podList := newPodList(1000)
+	validPod := newPod("valid")
+	podList.Items = append(podList.Items, *validPod)
 
 	tests := []struct {
-		list         corev1.PodList
+		list         *corev1.PodList
 		name         string
 		expect       *corev1.Pod
 		expectErrMsg string
@@ -129,7 +114,7 @@ func Test_getPodFromPodList(t *testing.T) {
 		{
 			list:   podList,
 			name:   "valid",
-			expect: &validPod,
+			expect: validPod,
 		},
 		{
 			list:         podList,
@@ -141,7 +126,7 @@ func Test_getPodFromPodList(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // Parallel testing
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := getPodFromPodList(&tt.list, tt.name)
+			actual, err := getPodFromPodList(tt.list, tt.name)
 			if tt.expectErrMsg != "" {
 				if err == nil {
 					t.Errorf("error expected on %s, but no error reported", tt.name)
@@ -163,4 +148,23 @@ func Test_getPodFromPodList(t *testing.T) {
 			}
 		})
 	}
+}
+
+// returns a pod object with the name passed as parameter
+func newPod(name string) *corev1.Pod {
+	return &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Spec:       corev1.PodSpec{},
+		Status:     corev1.PodStatus{},
+	}
+}
+
+// returns a list of pods with the number of elements passed as paramenter
+func newPodList(podsNumber int) *corev1.PodList {
+	pods := []corev1.Pod{}
+	for i := 0; i < podsNumber; i++ {
+		pods = append(pods, *newPod(fmt.Sprintf("test-pod%d", i)))
+	}
+	return &v1.PodList{Items: pods}
 }
