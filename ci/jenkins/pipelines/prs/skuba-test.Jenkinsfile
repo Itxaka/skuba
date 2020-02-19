@@ -8,7 +8,7 @@ pipeline {
     agent { node { label 'caasp-team-private-integration' } }
 
     environment {
-        SKUBA_BINPATH = '/home/jenkins/go/bin/skuba'
+        SKUBA_BINPATH = '${WORKSPACE}/skuba/'
         OPENSTACK_OPENRC = credentials('ecp-openrc')
         GITHUB_TOKEN = credentials('github-token')
         PLATFORM = 'openstack'
@@ -91,7 +91,7 @@ pipeline {
         stage('Getting Ready For Cluster Deployment') { steps {
             sh(script: 'make -f skuba/ci/Makefile pre_deployment', label: 'Pre Deployment')
             sh(script: 'make -f skuba/ci/Makefile pr_checks', label: 'PR Checks')
-            sh(script: "pushd skuba; make -f Makefile install; popd", label: 'Build Skuba')
+            sh(script: "pushd skuba; make -f Makefile build; popd", label: 'Build Skuba')
         } }
 
         stage('Cluster Provisioning') {

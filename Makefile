@@ -46,7 +46,7 @@ all: install
 
 .PHONY: build
 build: go-version-check
-	$(GO) build $(GOMODFLAG) $(SKUBA_LDFLAGS) -tags $(TAGS) ./cmd/...
+	$(GO) build $(GOMODFLAG) $(SKUBA_LDFLAGS) -tags $(TAGS) ./cmd/skuba/
 
 MANPAGES_MD := $(wildcard docs/man/*.md)
 MANPAGES    := $(MANPAGES_MD:%.md=%)
